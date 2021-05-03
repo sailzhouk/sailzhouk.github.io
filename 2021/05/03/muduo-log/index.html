@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
 
-<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Buscando...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Suche...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
 <meta name="description" content="muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析 日志要记录的内容： 收到每条内部消息的id  收到每条外部消息的全文  发出的每条消息的全文，全局唯一的id  关键内部状态的变更   日志为多生产者-单消费者问题 生产者  低延迟 无阻塞 低cpu开销   消费者  吞吐量    功能 主要提供日志分级功能  TRACE、DEBUG、INFO、WARN、ERROR、FATA">
 <meta property="og:type" content="article">
 <meta property="og:title" content="muduo日志库的理解">
@@ -27,13 +27,13 @@
 <meta property="og:site_name" content="菲利浦的大脑">
 <meta property="og:description" content="muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析 日志要记录的内容： 收到每条内部消息的id  收到每条外部消息的全文  发出的每条消息的全文，全局唯一的id  关键内部状态的变更   日志为多生产者-单消费者问题 生产者  低延迟 无阻塞 低cpu开销   消费者  吞吐量    功能 主要提供日志分级功能  TRACE、DEBUG、INFO、WARN、ERROR、FATA">
 <meta property="og:locale">
-<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/2738931/1620025500165-74d49e11-07b3-4dbe-94d8-c6c0b4a14d0c.png">
+<meta property="og:image" content="http://example.com/2021/05/03/muduo-log/muduo-log/20210503.png">
 <meta property="article:published_time" content="2021-05-03T07:31:52.000Z">
-<meta property="article:modified_time" content="2021-05-03T07:32:31.516Z">
+<meta property="article:modified_time" content="2021-05-03T07:44:37.553Z">
 <meta property="article:author" content="Qihang Yu">
 <meta property="article:tag" content="muduo">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/2738931/1620025500165-74d49e11-07b3-4dbe-94d8-c6c0b4a14d0c.png">
+<meta name="twitter:image" content="http://example.com/2021/05/03/muduo-log/muduo-log/20210503.png">
 
 
 <link rel="canonical" href="http://example.com/2021/05/03/muduo-log/">
@@ -61,7 +61,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Cambiar a barra de navegación" role="button">
+    <div class="toggle" aria-label="Navigationsleiste an/ausschalten" role="button">
     </div>
   </div>
 
@@ -100,10 +100,10 @@
     <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
-          Tabla de contenidos
+          Inhaltsverzeichnis
         </li>
         <li class="sidebar-nav-overview">
-          Inicio
+          Übersicht
         </li>
       </ul>
 
@@ -124,12 +124,12 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives">
           <span class="site-state-item-count">2</span>
-          <span class="site-state-item-name">entradas</span>
+          <span class="site-state-item-name">Artikel</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
         <span class="site-state-item-count">1</span>
-        <span class="site-state-item-name">tags</span>
+        <span class="site-state-item-name">schlagwörter</span>
       </div>
   </nav>
 </div>
@@ -189,10 +189,10 @@
       <span class="post-meta-item-icon">
         <i class="far fa-calendar"></i>
       </span>
-      <span class="post-meta-item-text">Publicado el</span>
+      <span class="post-meta-item-text">Veröffentlicht am</span>
       
 
-      <time title="Creado por: 2021-05-03 15:31:52 / Modificado por: 15:32:31" itemprop="dateCreated datePublished" datetime="2021-05-03T15:31:52+08:00">2021-05-03</time>
+      <time title="Erstellt: 2021-05-03 15:31:52 / Geändert am: 15:44:37" itemprop="dateCreated datePublished" datetime="2021-05-03T15:31:52+08:00">2021-05-03</time>
     </span>
 
   
@@ -257,7 +257,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="从实现理解，muduo库中涉及日志操作的类关系如下"><a href="#从实现理解，muduo库中涉及日志操作的类关系如下" class="headerlink" title="从实现理解，muduo库中涉及日志操作的类关系如下:"></a>从实现理解，muduo库中涉及日志操作的类关系如下:</h3><p><img src="https://cdn.nlark.com/yuque/0/2021/png/2738931/1620025500165-74d49e11-07b3-4dbe-94d8-c6c0b4a14d0c.png" alt="img"></p>
+<h3 id="从实现理解，muduo库中涉及日志操作的类关系如下"><a href="#从实现理解，muduo库中涉及日志操作的类关系如下" class="headerlink" title="从实现理解，muduo库中涉及日志操作的类关系如下:"></a>从实现理解，muduo库中涉及日志操作的类关系如下:</h3><p><img src="muduo-log/20210503.png" alt="20210503"></p>
 <p>上面的类图仅是简略地展现了各个类之间的关系以及它们的成员</p>
 <h4 id="概括："><a href="#概括：" class="headerlink" title="概括："></a>概括：</h4><p><code>Logger</code>为日志类的主体，主要向外界提供接口，其写入日志的功能由其包含的<code>Impl</code>的对象实现，<code>Impl</code>内部包含<code>SourceFile</code>，其本质上是一个buffer，存储文件名信息，<code>Timestamp</code>用于打印日期时间，<code>LogStream</code>为输出流，<code>Impl</code>会向该流中不断输入日志信息。</p>
 <p>Impl在构造函数中首先打印出<code>时间和级别</code>，随后用户程序不断向Impl中的LogStream对象输入<code>日志正文</code>内容，在日志类析构时，Impl将最后的<code>文件名和行号</code>等信息打印到LogStream中，最后<code>LogStream</code>中缓存的内容由设置的输出方法输出到标准输出或者某个文件中。</p>
@@ -329,7 +329,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">Qihang Yu</span>
 </div>
-  <div class="powered-by">Creado mediante <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  <div class="powered-by">Erstellt mit  <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
   </div>
 
     </div>
