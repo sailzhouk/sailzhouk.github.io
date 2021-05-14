@@ -22,15 +22,15 @@
 <script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
 <meta name="description" content="non blocking网络编程中需要buffer为什么需要non blockingnon blocking可以避免被read或write这种IO系统调用所阻塞，从而一个线程可以服务于多个连接，否则一旦一个线程被阻塞，它就无法处理其他线程的IO事件 output bufferoutput buffer用于发送数据，因为TCP流量控制的影响，程序不能一次性将所有数据发出，为了不在原地等待所有数据发送">
 <meta property="og:type" content="article">
-<meta property="og:title" content="muduo-buffer库的理解">
+<meta property="og:title" content="muduo-学习Buffer Class">
 <meta property="og:url" content="http://example.com/2021/05/14/muduo-buffer1/index.html">
 <meta property="og:site_name" content="Philip&#39;s Brain">
 <meta property="og:description" content="non blocking网络编程中需要buffer为什么需要non blockingnon blocking可以避免被read或write这种IO系统调用所阻塞，从而一个线程可以服务于多个连接，否则一旦一个线程被阻塞，它就无法处理其他线程的IO事件 output bufferoutput buffer用于发送数据，因为TCP流量控制的影响，程序不能一次性将所有数据发出，为了不在原地等待所有数据发送">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/2021/05/14/muduo-buffer1/0514.png">
 <meta property="article:published_time" content="2021-05-14T02:03:37.000Z">
-<meta property="article:modified_time" content="2021-05-14T02:06:03.808Z">
-<meta property="article:author" content="Qihang Yu">
+<meta property="article:modified_time" content="2021-05-14T14:08:48.223Z">
+<meta property="article:author" content="Sail Yu">
 <meta property="article:tag" content="muduo">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2021/05/14/muduo-buffer1/0514.png">
@@ -40,10 +40,10 @@
 
 
 
-<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;14&#x2F;muduo-buffer1&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;14&#x2F;muduo-buffer1&#x2F;&quot;,&quot;title&quot;:&quot;muduo-buffer库的理解&quot;}</script>
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;14&#x2F;muduo-buffer1&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;14&#x2F;muduo-buffer1&#x2F;&quot;,&quot;title&quot;:&quot;muduo-学习Buffer Class&quot;}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
-<title>muduo-buffer库的理解 | Philip's Brain</title><script src="/js/config.js"></script>
+<title>muduo-学习Buffer Class | Philip's Brain</title><script src="/js/config.js"></script>
   
 
 
@@ -116,7 +116,7 @@
 
         <div class="site-overview-wrap sidebar-panel">
           <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">Qihang Yu</p>
+  <p class="site-author-name" itemprop="name">Sail Yu</p>
   <div class="site-description" itemprop="description"></div>
 </div>
 <div class="site-state-wrap site-overview-item animated">
@@ -171,7 +171,7 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Qihang Yu">
+      <meta itemprop="name" content="Sail Yu">
       <meta itemprop="description" content="">
     </span>
 
@@ -180,7 +180,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          muduo-buffer库的理解
+          muduo-学习Buffer Class
         </h1>
 
         <div class="post-meta-container">
@@ -192,7 +192,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2021-05-14 10:03:37 / Modified: 10:06:03" itemprop="dateCreated datePublished" datetime="2021-05-14T10:03:37+08:00">2021-05-14</time>
+      <time title="Created: 2021-05-14 10:03:37 / Modified: 22:08:48" itemprop="dateCreated datePublished" datetime="2021-05-14T10:03:37+08:00">2021-05-14</time>
     </span>
 
   
@@ -246,11 +246,14 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2021/05/03/muduo-log/" rel="prev" title="muduo日志库的理解">
-                  <i class="fa fa-chevron-left"></i> muduo日志库的理解
+                <a href="/2021/05/03/muduo-log/" rel="prev" title="muduo-学习日志库">
+                  <i class="fa fa-chevron-left"></i> muduo-学习日志库
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2021/05/14/muduo-channel/" rel="next" title="muduo-学习Channel Class">
+                  muduo-学习Channel Class <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
@@ -275,7 +278,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Qihang Yu</span>
+  <span class="author" itemprop="copyrightHolder">Sail Yu</span>
 </div>
   <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
   </div>

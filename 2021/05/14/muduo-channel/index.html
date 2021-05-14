@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="muduo的Channel Class是socket的扩展，提供了对socket进行处理的一些接口，有一个对应于socket的文件描述符fd_  , 但其并不负责管理它的生命周期，即不会关闭该文件描述符，其内部扩充了用于IO复用epoll&#x2F;poll的事件成员events_ &#x2F;revents_，每个Channel只属于一个EventLoop。通过Channel可以设置对应socket的关注事件（读&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="muduo-学习Channel Class">
+<meta property="og:url" content="http://example.com/2021/05/14/muduo-channel/index.html">
+<meta property="og:site_name" content="Philip&#39;s Brain">
+<meta property="og:description" content="muduo的Channel Class是socket的扩展，提供了对socket进行处理的一些接口，有一个对应于socket的文件描述符fd_  , 但其并不负责管理它的生命周期，即不会关闭该文件描述符，其内部扩充了用于IO复用epoll&#x2F;poll的事件成员events_ &#x2F;revents_，每个Channel只属于一个EventLoop。通过Channel可以设置对应socket的关注事件（读&#x2F;">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-05-14T12:56:24.000Z">
+<meta property="article:modified_time" content="2021-05-14T14:08:01.085Z">
+<meta property="article:author" content="Sail Yu">
+<meta property="article:tag" content="muduo">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2021/05/14/muduo-channel/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;14&#x2F;muduo-channel&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;14&#x2F;muduo-channel&#x2F;&quot;,&quot;title&quot;:&quot;muduo-学习Channel Class&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>muduo-学习Channel Class | Philip's Brain</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Philip's Brain</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Sail Yu</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/14/muduo-channel/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Sail Yu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Philip's Brain">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          muduo-学习Channel Class
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-05-14 20:56:24 / Modified: 22:08:01" itemprop="dateCreated datePublished" datetime="2021-05-14T20:56:24+08:00">2021-05-14</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>muduo的Channel Class是socket的扩展，提供了对socket进行处理的一些接口，有一个对应于socket的文件描述符<code>fd_ </code> , 但其并不负责管理它的生命周期，即不会关闭该文件描述符，其内部扩充了用于IO复用epoll/poll的事件成员<code>events_ </code>/<code>revents_</code>，每个Channel只属于一个EventLoop。通过Channel可以设置对应socket的关注事件（读/写）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Channel</span> :</span> noncopyable &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">typedef</span> std::function&lt;<span class="built_in"><span class="keyword">void</span></span>()&gt; EventCallback;</span><br><span class="line">  <span class="keyword">typedef</span> std::function&lt;<span class="built_in"><span class="keyword">void</span></span>(Timestamp)&gt; ReadEventCallback;</span><br><span class="line">  <span class="built_in">Channel</span>(EventLoop* loop, <span class="keyword">int</span> fd);</span><br><span class="line">  ~<span class="built_in">Channel</span>();</span><br><span class="line">    </span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">handleEvent</span><span class="params">(Timestamp receiveTime)</span></span>;</span><br><span class="line">  <span class="comment">// 设置各种事件的回调函数</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">setReadCallback</span><span class="params">(ReadEventCallback cb)</span></span></span><br><span class="line"><span class="function">  </span>&#123; readCallback_ = std::<span class="built_in">move</span>(cb); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">setWriteCallback</span><span class="params">(EventCallback cb)</span></span></span><br><span class="line"><span class="function">  </span>&#123; writeCallback_ = std::<span class="built_in">move</span>(cb); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">setCloseCallback</span><span class="params">(EventCallback cb)</span></span></span><br><span class="line"><span class="function">  </span>&#123; closeCallback_ = std::<span class="built_in">move</span>(cb); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">setErrorCallback</span><span class="params">(EventCallback cb)</span></span></span><br><span class="line"><span class="function">  </span>&#123; errorCallback_ = std::<span class="built_in">move</span>(cb); &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Tie this channel to the owner object managed by shared_ptr,</span></span><br><span class="line">  <span class="comment">/// prevent the owner object being destroyed in handleEvent.</span></span><br><span class="line">   </span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">tie</span><span class="params">(<span class="keyword">const</span> std::shared_ptr&lt;<span class="keyword">void</span>&gt;&amp;)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">fd</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> fd_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">events</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> events_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">set_revents</span><span class="params">(<span class="keyword">int</span> revt)</span> </span>&#123; revents_ = revt; &#125; <span class="comment">// used by pollers</span></span><br><span class="line">  <span class="comment">// int revents() const &#123; return revents_; &#125;</span></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">isNoneEvent</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> events_ == kNoneEvent; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">enableReading</span><span class="params">()</span> </span>&#123; events_ |= kReadEvent; <span class="built_in">update</span>(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">disableReading</span><span class="params">()</span> </span>&#123; events_ &amp;= ~kReadEvent; <span class="built_in">update</span>(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">enableWriting</span><span class="params">()</span> </span>&#123; events_ |= kWriteEvent; <span class="built_in">update</span>(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">disableWriting</span><span class="params">()</span> </span>&#123; events_ &amp;= ~kWriteEvent; <span class="built_in">update</span>(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">disableAll</span><span class="params">()</span> </span>&#123; events_ = kNoneEvent; <span class="built_in">update</span>(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">isWriting</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> events_ &amp; kWriteEvent; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">isReading</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> events_ &amp; kReadEvent; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// for Poller</span></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">index</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> index_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">set_index</span><span class="params">(<span class="keyword">int</span> idx)</span> </span>&#123; index_ = idx; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// for debug</span></span><br><span class="line">  <span class="function">string <span class="title">reventsToString</span><span class="params">()</span> <span class="keyword">const</span></span>;</span><br><span class="line">  <span class="function">string <span class="title">eventsToString</span><span class="params">()</span> <span class="keyword">const</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">doNotLogHup</span><span class="params">()</span> </span>&#123; logHup_ = <span class="literal">false</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function">EventLoop* <span class="title">ownerLoop</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> loop_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">remove</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="function"><span class="keyword">static</span> string <span class="title">eventsToString</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> ev)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">update</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">handleEventWithGuard</span><span class="params">(Timestamp receiveTime)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> kNoneEvent;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> kReadEvent;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> kWriteEvent;</span><br><span class="line"></span><br><span class="line">  EventLoop *loop_;</span><br><span class="line">  <span class="keyword">const</span> <span class="keyword">int</span>  fd_;</span><br><span class="line">  <span class="keyword">int</span>        events_;</span><br><span class="line">  <span class="keyword">int</span>        revents_; <span class="comment">// it&#x27;s the received event types of epoll or poll</span></span><br><span class="line">  <span class="keyword">int</span>        index_; <span class="comment">// used by Poller.</span></span><br><span class="line">  <span class="keyword">bool</span>       logHup_;</span><br><span class="line"></span><br><span class="line">  std::weak_ptr&lt;<span class="keyword">void</span>&gt; tie_;</span><br><span class="line">  <span class="keyword">bool</span> tied_;</span><br><span class="line">  <span class="keyword">bool</span> eventHandling_;</span><br><span class="line">  <span class="keyword">bool</span> addedToLoop_;</span><br><span class="line">  ReadEventCallback readCallback_;</span><br><span class="line">  EventCallback writeCallback_;</span><br><span class="line">  EventCallback closeCallback_;</span><br><span class="line">  EventCallback errorCallback_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>接下来看一些重点方法的实现：</p>
+<p>这里主要是kReadEvent事件中添加了POLLPRI事件，POLLPRI表示紧急的读事件，比如<strong>带外数据</strong></p>
+<blockquote>
+<p>许多的传输层都具有带外数据（也称为 经加速数据 ）的概念，想法就是<strong>连接的某段发生了重要的事情，希望迅速的通知给对端</strong>。这里的迅速是指这种通知应该在已经排队了的带内数据之前发送。也就是说，带外数据拥有更高的优先级。<strong>带外数据不要求再启动一个连接进行传输，而是使用已有的连接进行传输。</strong></p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> Channel::kNoneEvent = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> Channel::kReadEvent = POLLIN | POLLPRI; <span class="comment">// POLLPRI：高优先级读取，用于读取带外数据</span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> Channel::kWriteEvent = POLLOUT;</span><br></pre></td></tr></table></figure>
+
+<p>析构函数并不会关闭<code>fd_</code> ，仅仅是确保该Channel目前没有正在处理的事件，并且也没有被关联到任何一个EventLoop上</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">Channel::<span class="built_in">Channel</span>(EventLoop *loop, <span class="keyword">int</span> fd)</span><br><span class="line">  : <span class="built_in">fd_</span>(fd),</span><br><span class="line">    <span class="built_in">loop_</span>(loop),</span><br><span class="line">    <span class="built_in">events_</span>(<span class="number">0</span>),</span><br><span class="line">    <span class="built_in">revents_</span>(<span class="number">0</span>),</span><br><span class="line">    <span class="built_in">index_</span>(<span class="number">-1</span>),</span><br><span class="line">    <span class="built_in">logHup_</span>(<span class="literal">true</span>),</span><br><span class="line">    <span class="built_in">tied_</span>(<span class="literal">false</span>),</span><br><span class="line">    <span class="built_in">eventHandling_</span>(<span class="literal">false</span>),</span><br><span class="line">    <span class="built_in">addedToLoop_</span>(<span class="literal">false</span>) &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Channel::~<span class="built_in">Channel</span>() &#123;</span><br><span class="line">  <span class="built_in">assert</span>(!eventHandling_);</span><br><span class="line">  <span class="built_in">assert</span>(!addedToLoop_);</span><br><span class="line">  <span class="keyword">if</span> (loop_-&gt;<span class="built_in">isInLoopThread</span>())</span><br><span class="line">  &#123;</span><br><span class="line">      <span class="built_in">assert</span>(!loop_-&gt;<span class="built_in">hasChannel</span>(<span class="keyword">this</span>));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Channel的核心方法就是下方的handleEvent和handleEventWithGuard，handleEvent尝试取得owner loop的shared_ptr，导致其引用计数增加，从而在handleEventWithGuard的过程中owner loop不会销毁。</p>
+<p>在handleEventWithGuard中首先设置<code>eventHandling_</code> 为true表示处理事件中，随后是针对revents中的不同事件分别进行处理，执行相应回调函数。</p>
+<p>这里涉及到对POLLRDHUP和POLLHUP的理解：</p>
+<blockquote>
+<p>EPOLLRDHUP 表示读关闭。EPOLLHUP表示读写都关闭</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Channel::handleEvent</span><span class="params">(Timestamp receiveTime)</span> </span>&#123;</span><br><span class="line">  std::shared_ptr&lt;<span class="keyword">void</span>&gt; guard;</span><br><span class="line">  <span class="keyword">if</span> (tied_) &#123;</span><br><span class="line">    guard = tie_.<span class="built_in">lock</span>();</span><br><span class="line">    <span class="keyword">if</span> (guard) &#123;</span><br><span class="line">      <span class="built_in">handleEventWithGuard</span>(receiveTime);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">handleEventWithGuard</span>(receiveTime);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Channel::handleEventWithGuard</span><span class="params">(Timestamp receiveTime)</span> </span>&#123;</span><br><span class="line">  eventHandling_ = <span class="literal">true</span>;</span><br><span class="line">  LOG_TRACE &lt;&lt; <span class="built_in">reventsToString</span>();</span><br><span class="line">  <span class="comment">// 如果POLLHUP说明对等方不再连接，并且此时没有需要读取的事件，就执行closeCallback_</span></span><br><span class="line">  <span class="keyword">if</span> ((revents_ &amp; POLLHUP) &amp;&amp; !(revents_ &amp; POLLIN)) &#123;</span><br><span class="line">    <span class="keyword">if</span> (logHup_)</span><br><span class="line">    &#123;</span><br><span class="line">      LOG_WARN &lt;&lt; <span class="string">&quot;fd = &quot;</span> &lt;&lt; fd_ &lt;&lt; <span class="string">&quot; Channel::handle_event() POLLHUP&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (closeCallback_) <span class="built_in">closeCallback_</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 处理套接字发生错误，不关闭</span></span><br><span class="line">  <span class="keyword">if</span> (revents_ &amp; POLLNVAL) &#123;</span><br><span class="line">    LOG_WARN &lt;&lt; <span class="string">&quot;fd = &quot;</span> &lt;&lt; fd_ &lt;&lt; <span class="string">&quot; Channel::handle_event() POLLNVAL&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (revents_ &amp; (POLLERR | POLLNVAL)) &#123;</span><br><span class="line">    <span class="keyword">if</span> (errorCallback_) <span class="built_in">errorCallback_</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 有读事件就执行读取回调</span></span><br><span class="line">  <span class="keyword">if</span> (revents_ &amp; (POLLIN | POLLPRI | POLLRDHUP)) &#123;</span><br><span class="line">    <span class="keyword">if</span> (readCallback_) <span class="built_in">readCallback_</span>(receiveTime);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 有写事件就执行写入回调</span></span><br><span class="line">  <span class="keyword">if</span> (revents_ &amp; POLLOUT) &#123;</span><br><span class="line">    <span class="keyword">if</span> (writeCallback_) <span class="built_in">writeCallback_</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  eventHandling_ = <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/muduo/" rel="tag"># muduo</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/14/muduo-buffer1/" rel="prev" title="muduo-学习Buffer Class">
+                  <i class="fa fa-chevron-left"></i> muduo-学习Buffer Class
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sail Yu</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
