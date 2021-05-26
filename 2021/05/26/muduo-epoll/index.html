@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="muduo中有一个Poller类用于提供IO多路复用的功能，Poller是一个基类，其子类有EPollPoller和PollPoller，我们这里只看EPollPoller的实现，我们后面简单地用Epoller来代指它。 前面在Channel的学习中提到，Channel、Epoller以及EventLoop三者是相关联的，Channel可以通过其所属EventLoop来找到监听它的Epoller，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="muduo-学习Epoll">
+<meta property="og:url" content="http://example.com/2021/05/26/muduo-epoll/index.html">
+<meta property="og:site_name" content="Philip&#39;s Brain">
+<meta property="og:description" content="muduo中有一个Poller类用于提供IO多路复用的功能，Poller是一个基类，其子类有EPollPoller和PollPoller，我们这里只看EPollPoller的实现，我们后面简单地用Epoller来代指它。 前面在Channel的学习中提到，Channel、Epoller以及EventLoop三者是相关联的，Channel可以通过其所属EventLoop来找到监听它的Epoller，">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-05-26T12:51:33.000Z">
+<meta property="article:modified_time" content="2021-05-26T14:17:25.724Z">
+<meta property="article:author" content="Sail Yu">
+<meta property="article:tag" content="muduo">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2021/05/26/muduo-epoll/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;26&#x2F;muduo-epoll&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;26&#x2F;muduo-epoll&#x2F;&quot;,&quot;title&quot;:&quot;muduo-学习Epoll&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>muduo-学习Epoll | Philip's Brain</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Philip's Brain</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E5%8F%91-%E4%BC%A0%E5%9B%9E%E5%93%8D%E5%BA%94%E4%BA%8B%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">分发&#x2F;传回响应事件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E7%9B%91%E5%90%ACChannel%E4%BF%A1%E6%81%AF"><span class="nav-number">2.</span> <span class="nav-text">更新监听Channel信息</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Sail Yu</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/26/muduo-epoll/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Sail Yu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Philip's Brain">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          muduo-学习Epoll
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-05-26 20:51:33 / Modified: 22:17:25" itemprop="dateCreated datePublished" datetime="2021-05-26T20:51:33+08:00">2021-05-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/muduo/" itemprop="url" rel="index"><span itemprop="name">muduo</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>muduo中有一个Poller类用于提供IO多路复用的功能，Poller是一个基类，其子类有EPollPoller和PollPoller，我们这里只看EPollPoller的实现，我们后面简单地用Epoller来代指它。</p>
+<p>前面在Channel的学习中提到，Channel、Epoller以及EventLoop三者是相关联的，Channel可以通过其所属EventLoop来找到监听它的Epoller，Epoller本身并不包含Channel，EventLoop就像是连接它们的桥梁。</p>
+<p>因此EPoller保存一个EventLoop指针，那么这个类又相对于系统调用封装了哪些功能呢？</p>
+<h4 id="分发-传回响应事件"><a href="#分发-传回响应事件" class="headerlink" title="分发/传回响应事件"></a>分发/传回响应事件</h4><p>首先由于muduo的one eventloop per thread+thread pool这种模式，每个Channel上发生的事件最好都由一个专门的线程去处理，因此Epoller不能仅仅只返回包含一个响应的事件的数组，而要能够将响应的事件分发出去，这可以通过<strong>fillActiveChannels</strong>来实现，因为Channel内部有一个**revent_**成员，因此，Epoller只需要将响应的事件注册给Channel，同时将所有的响应Channel传出给EventLoop，由EventLoop来让对应Channel执行响应的事件。</p>
+<h4 id="更新监听Channel信息"><a href="#更新监听Channel信息" class="headerlink" title="更新监听Channel信息"></a>更新监听Channel信息</h4><p>对应epoll_ctl这个系统调用，用于增加、删除、更新对应Channel的监听事件</p>
+<p>我们首先来看Poller类</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Poller</span> :</span> noncopyable</span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">  <span class="keyword">typedef</span> std::vector&lt;Channel*&gt; ChannelList;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">Poller</span>(EventLoop* loop);</span><br><span class="line">  <span class="keyword">virtual</span> ~<span class="built_in">Poller</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Polls the I/O events.</span></span><br><span class="line">  <span class="comment">/// Must be called in the loop thread.</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> Timestamp <span class="title">poll</span><span class="params">(<span class="keyword">int</span> timeoutMs, ChannelList* activeChannels)</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// 更新channel上监听的事件，由EventLoop调用</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">updateChannel</span><span class="params">(Channel* channel)</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// 删除channel，由EventLoop调用</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">removeChannel</span><span class="params">(Channel* channel)</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">hasChannel</span><span class="params">(Channel* channel)</span> <span class="keyword">const</span></span>;</span><br><span class="line">	</span><br><span class="line">  <span class="comment">/// 得到默认的Poller（EPollPoller or PollPoller）</span></span><br><span class="line">  <span class="function"><span class="keyword">static</span> Poller* <span class="title">newDefaultPoller</span><span class="params">(EventLoop* loop)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">assertInLoopThread</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    ownerLoop_-&gt;<span class="built_in">assertInLoopThread</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">protected</span>:</span><br><span class="line">  <span class="keyword">typedef</span> std::map&lt;<span class="keyword">int</span>, Channel*&gt; ChannelMap; <span class="comment">//由fd查找对应channel，换成unordered_map可能更好</span></span><br><span class="line">  ChannelMap channels_;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  EventLoop* ownerLoop_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Poller类定义了的方法只有hasChannel，这个类也只能由loop所在线程调用，因此有assertInLoopThread()。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">Poller::hasChannel</span><span class="params">(Channel* channel)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">  <span class="built_in">assertInLoopThread</span>();</span><br><span class="line">  ChannelMap::const_iterator it = channels_.<span class="built_in">find</span>(channel-&gt;<span class="built_in">fd</span>());</span><br><span class="line">  <span class="keyword">return</span> it != channels_.<span class="built_in">end</span>() &amp;&amp; it-&gt;second == channel;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面是EPollPoller</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">EPollPoller</span> :</span> <span class="keyword">public</span> Poller</span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">EPollPoller</span>(EventLoop* loop);</span><br><span class="line">  ~<span class="built_in">EPollPoller</span>() <span class="keyword">override</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function">Timestamp <span class="title">poll</span><span class="params">(<span class="keyword">int</span> timeoutMs, ChannelList* activeChannels)</span> <span class="keyword">override</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">updateChannel</span><span class="params">(Channel* channel)</span> <span class="keyword">override</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">removeChannel</span><span class="params">(Channel* channel)</span> <span class="keyword">override</span></span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> kInitEventListSize = <span class="number">16</span>; <span class="comment">// 初始EventList的大小</span></span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span>* <span class="title">operationToString</span><span class="params">(<span class="keyword">int</span> op)</span></span>; <span class="comment">// 用于日志输出</span></span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">fillActiveChannels</span><span class="params">(<span class="keyword">int</span> numEvents,</span></span></span><br><span class="line"><span class="function"><span class="params">                          ChannelList* activeChannels)</span> <span class="keyword">const</span></span>; <span class="comment">// 向channel注册revents_</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">update</span><span class="params">(<span class="keyword">int</span> operation, Channel* channel)</span></span>; <span class="comment">// 更新channel关注事件为operation</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">typedef</span> std::vector&lt;struct epoll_event&gt; EventList;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> epollfd_;</span><br><span class="line">  EventList events_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>首先，定义了一些只能在该文件（EPollPoller.cc）被引用的常量，用于判断Channel的状态</p>
+<p>后面是构造和析构函数，析构函数负责关闭<strong>epollfd_</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kNew = <span class="number">-1</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kAdded = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kDeleted = <span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">EPollPoller::<span class="built_in">EPollPoller</span>(EventLoop* loop)</span><br><span class="line">  : <span class="built_in">Poller</span>(loop),</span><br><span class="line">    <span class="built_in">epollfd_</span>(::<span class="built_in">epoll_create1</span>(EPOLL_CLOEXEC)),</span><br><span class="line">    <span class="built_in">events_</span>(kInitEventListSize)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (epollfd_ &lt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    LOG_SYSFATAL &lt;&lt; <span class="string">&quot;EPollPoller::EPollPoller&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">EPollPoller::~<span class="built_in">EPollPoller</span>()</span><br><span class="line">&#123;</span><br><span class="line">  ::<span class="built_in">close</span>(epollfd_);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实现基类的纯虚函数</p>
+<p>poll用<strong>epoll_wait</strong>监听事件，muduo这里使用的是水平触发，作者认为这样容易通过strace检查程序的行为，poll调用fillActiveChannels传回activeChannels，以及注册channel的**revents_**，关于出错处理，当errno不为EINTR时会在日志记录错误，但并不会退出程序</p>
+<p><strong>updateChannel</strong>由loop所在线程调用，对channel的状态进行了区分，将channel对应的fd添加到**epollfd_**中。</p>
+<p><strong>removeChannel</strong>则是将channel从**channels_<strong>中移除，在移除前需要确保其状态为kDeleted，否则要先向</strong>epollfd_**更新状态</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Timestamp <span class="title">EPollPoller::poll</span><span class="params">(<span class="keyword">int</span> timeoutMs, ChannelList* activeChannels)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  LOG_TRACE &lt;&lt; <span class="string">&quot;fd total count &quot;</span> &lt;&lt; channels_.<span class="built_in">size</span>();</span><br><span class="line">  <span class="keyword">int</span> numEvents = ::<span class="built_in">epoll_wait</span>(epollfd_,</span><br><span class="line">                               &amp;*events_.<span class="built_in">begin</span>(),</span><br><span class="line">                               <span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(events_.<span class="built_in">size</span>()),</span><br><span class="line">                               timeoutMs);</span><br><span class="line">  <span class="keyword">int</span> savedErrno = errno;</span><br><span class="line">  <span class="function">Timestamp <span class="title">now</span><span class="params">(Timestamp::now())</span></span>;</span><br><span class="line">  <span class="keyword">if</span> (numEvents &gt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    LOG_TRACE &lt;&lt; numEvents &lt;&lt; <span class="string">&quot; events happened&quot;</span>;</span><br><span class="line">    <span class="built_in">fillActiveChannels</span>(numEvents, activeChannels);</span><br><span class="line">    <span class="keyword">if</span> (implicit_cast&lt;<span class="keyword">size_t</span>&gt;(numEvents) == events_.<span class="built_in">size</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      events_.<span class="built_in">resize</span>(events_.<span class="built_in">size</span>()*<span class="number">2</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (numEvents == <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    LOG_TRACE &lt;&lt; <span class="string">&quot;nothing happened&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// error happens, log uncommon ones</span></span><br><span class="line">    <span class="keyword">if</span> (savedErrno != EINTR)</span><br><span class="line">    &#123;</span><br><span class="line">      errno = savedErrno;</span><br><span class="line">      LOG_SYSERR &lt;&lt; <span class="string">&quot;EPollPoller::poll()&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> now;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">EPollPoller::fillActiveChannels</span><span class="params">(<span class="keyword">int</span> numEvents,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     ChannelList* activeChannels)</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">assert</span>(implicit_cast&lt;<span class="keyword">size_t</span>&gt;(numEvents) &lt;= events_.<span class="built_in">size</span>());</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numEvents; ++i)</span><br><span class="line">  &#123;</span><br><span class="line">    Channel* channel = <span class="keyword">static_cast</span>&lt;Channel*&gt;(events_[i].data.ptr);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> NDEBUG</span></span><br><span class="line">    <span class="keyword">int</span> fd = channel-&gt;<span class="built_in">fd</span>();</span><br><span class="line">    ChannelMap::const_iterator it = channels_.<span class="built_in">find</span>(fd);</span><br><span class="line">    <span class="built_in">assert</span>(it != channels_.<span class="built_in">end</span>());</span><br><span class="line">    <span class="built_in">assert</span>(it-&gt;second == channel);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    channel-&gt;<span class="built_in">set_revents</span>(events_[i].events);</span><br><span class="line">    activeChannels-&gt;<span class="built_in">push_back</span>(channel);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">EPollPoller::updateChannel</span><span class="params">(Channel* channel)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  Poller::<span class="built_in">assertInLoopThread</span>();</span><br><span class="line">  <span class="keyword">const</span> <span class="keyword">int</span> index = channel-&gt;<span class="built_in">index</span>();</span><br><span class="line">  LOG_TRACE &lt;&lt; <span class="string">&quot;fd = &quot;</span> &lt;&lt; channel-&gt;<span class="built_in">fd</span>()</span><br><span class="line">    &lt;&lt; <span class="string">&quot; events = &quot;</span> &lt;&lt; channel-&gt;<span class="built_in">events</span>() &lt;&lt; <span class="string">&quot; index = &quot;</span> &lt;&lt; index;</span><br><span class="line">  <span class="keyword">if</span> (index == kNew || index == kDeleted)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// a new one, add with EPOLL_CTL_ADD</span></span><br><span class="line">    <span class="keyword">int</span> fd = channel-&gt;<span class="built_in">fd</span>();</span><br><span class="line">    <span class="keyword">if</span> (index == kNew)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">assert</span>(channels_.<span class="built_in">find</span>(fd) == channels_.<span class="built_in">end</span>());</span><br><span class="line">      channels_[fd] = channel;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="comment">// index == kDeleted</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">assert</span>(channels_.<span class="built_in">find</span>(fd) != channels_.<span class="built_in">end</span>());</span><br><span class="line">      <span class="built_in">assert</span>(channels_[fd] == channel);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    channel-&gt;<span class="built_in">set_index</span>(kAdded);</span><br><span class="line">    <span class="built_in">update</span>(EPOLL_CTL_ADD, channel);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// update existing one with EPOLL_CTL_MOD/DEL</span></span><br><span class="line">    <span class="keyword">int</span> fd = channel-&gt;<span class="built_in">fd</span>();</span><br><span class="line">    (<span class="keyword">void</span>)fd;</span><br><span class="line">    <span class="built_in">assert</span>(channels_.<span class="built_in">find</span>(fd) != channels_.<span class="built_in">end</span>());</span><br><span class="line">    <span class="built_in">assert</span>(channels_[fd] == channel);</span><br><span class="line">    <span class="built_in">assert</span>(index == kAdded);</span><br><span class="line">    <span class="keyword">if</span> (channel-&gt;<span class="built_in">isNoneEvent</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">update</span>(EPOLL_CTL_DEL, channel);</span><br><span class="line">      channel-&gt;<span class="built_in">set_index</span>(kDeleted);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">update</span>(EPOLL_CTL_MOD, channel);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">EPollPoller::removeChannel</span><span class="params">(Channel* channel)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  Poller::<span class="built_in">assertInLoopThread</span>();</span><br><span class="line">  <span class="keyword">int</span> fd = channel-&gt;<span class="built_in">fd</span>();</span><br><span class="line">  LOG_TRACE &lt;&lt; <span class="string">&quot;fd = &quot;</span> &lt;&lt; fd;</span><br><span class="line">  <span class="built_in">assert</span>(channels_.<span class="built_in">find</span>(fd) != channels_.<span class="built_in">end</span>());</span><br><span class="line">  <span class="built_in">assert</span>(channels_[fd] == channel);</span><br><span class="line">  <span class="built_in">assert</span>(channel-&gt;<span class="built_in">isNoneEvent</span>());</span><br><span class="line">  <span class="keyword">int</span> index = channel-&gt;<span class="built_in">index</span>();</span><br><span class="line">  <span class="built_in">assert</span>(index == kAdded || index == kDeleted);</span><br><span class="line">  <span class="keyword">size_t</span> n = channels_.<span class="built_in">erase</span>(fd);</span><br><span class="line">  (<span class="keyword">void</span>)n;</span><br><span class="line">  <span class="built_in">assert</span>(n == <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (index == kAdded)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">update</span>(EPOLL_CTL_DEL, channel);</span><br><span class="line">  &#125;</span><br><span class="line">  channel-&gt;<span class="built_in">set_index</span>(kNew);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>update使用::epoll_ctl来更新关注fd，增加了对错误状态的封装，如果是删除操作出错则仅仅只是error记录响应日志信息，其他操作出错会直接退出。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">EPollPoller::update</span><span class="params">(<span class="keyword">int</span> operation, Channel* channel)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">epoll_event</span> <span class="title">event</span>;</span></span><br><span class="line">  <span class="built_in">memZero</span>(&amp;event, <span class="keyword">sizeof</span> event);</span><br><span class="line">  event.events = channel-&gt;<span class="built_in">events</span>();</span><br><span class="line">  event.data.ptr = channel;</span><br><span class="line">  <span class="keyword">int</span> fd = channel-&gt;<span class="built_in">fd</span>();</span><br><span class="line">  LOG_TRACE &lt;&lt; <span class="string">&quot;epoll_ctl op = &quot;</span> &lt;&lt; <span class="built_in">operationToString</span>(operation)</span><br><span class="line">    &lt;&lt; <span class="string">&quot; fd = &quot;</span> &lt;&lt; fd &lt;&lt; <span class="string">&quot; event = &#123; &quot;</span> &lt;&lt; channel-&gt;<span class="built_in">eventsToString</span>() &lt;&lt; <span class="string">&quot; &#125;&quot;</span>;</span><br><span class="line">  <span class="keyword">if</span> (::<span class="built_in">epoll_ctl</span>(epollfd_, operation, fd, &amp;event) &lt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (operation == EPOLL_CTL_DEL)</span><br><span class="line">    &#123;</span><br><span class="line">      LOG_SYSERR &lt;&lt; <span class="string">&quot;epoll_ctl op =&quot;</span> &lt;&lt; <span class="built_in">operationToString</span>(operation) &lt;&lt; <span class="string">&quot; fd =&quot;</span> &lt;&lt; fd;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">      LOG_SYSFATAL &lt;&lt; <span class="string">&quot;epoll_ctl op =&quot;</span> &lt;&lt; <span class="built_in">operationToString</span>(operation) &lt;&lt; <span class="string">&quot; fd =&quot;</span> &lt;&lt; fd;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/muduo/" rel="tag"># muduo</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/14/muduo-channel/" rel="prev" title="muduo-学习Channel Class">
+                  <i class="fa fa-chevron-left"></i> muduo-学习Channel Class
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sail Yu</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
