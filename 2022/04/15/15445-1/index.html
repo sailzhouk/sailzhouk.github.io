@@ -27,17 +27,17 @@
 <meta property="og:site_name" content="Philip&#39;s Brain">
 <meta property="og:description" content="Disk-Oriented Architecture计算机的物理存储可以按Volatile和Non-Volatile进行区分 Volatile:   断电后数据丢失–&gt;不能保存持久化的数据 随机存取 字节寻址  Non-Volatile:  断电后数据不会丢失 顺序存取–&gt;按照顺序进行存储 按照Block进行寻址  我们常用Memory（Volatile）和Disk（Non-volat">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415182005409.png">
-<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415190220698.png">
-<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415190417339.png">
-<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415190926656.png">
-<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415191737687.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/image-20220415182005409.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/image-20220415190220698.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/image-20220415190417339.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/image-20220415190926656.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/image-20220415191737687.png">
 <meta property="article:published_time" content="2022-04-15T07:02:57.000Z">
-<meta property="article:modified_time" content="2022-04-15T11:20:05.089Z">
+<meta property="article:modified_time" content="2022-04-15T11:25:46.142Z">
 <meta property="article:author" content="Sail Yu">
 <meta property="article:tag" content="15445">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415182005409.png">
+<meta name="twitter:image" content="http://example.com/2022/04/15/15445-1/image-20220415182005409.png">
 
 
 <link rel="canonical" href="http://example.com/2022/04/15/15445-1/">
@@ -201,7 +201,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2022-04-15 15:02:57 / Modified: 19:20:05" itemprop="dateCreated datePublished" datetime="2022-04-15T15:02:57+08:00">2022-04-15</time>
+      <time title="Created: 2022-04-15 15:02:57 / Modified: 19:25:46" itemprop="dateCreated datePublished" datetime="2022-04-15T15:02:57+08:00">2022-04-15</time>
     </span>
 
   
@@ -232,7 +232,7 @@
 <p>课程中提到有Non-volatile Memory的存在，基于这种类型的存储或可构建出全新的DBMS</p>
 </blockquote>
 <p>DB中的大量数据需要存储在Disk中，数据在Memory和Disk之间的移动会耗费大量的资源，DB需要精心设计存储结构保证读写操作的高效。</p>
-<img src="15445-1/image-20220415182005409.png" alt="image-20220415182005409" style="zoom: 33%;" />
+<img src="image-20220415182005409.png" alt="image-20220415182005409" style="zoom: 33%;" />
 
 <h1 id="Why-not-os？"><a href="#Why-not-os？" class="headerlink" title="Why not os？"></a>Why not os？</h1><p>数据以文件的形式存储在磁盘中，一个文件中的每个页在被读取时需要被加载到内存中，即从虚拟内存加载到物理内存中。DB在设计时往往不使用OS自带的内存管理调用，如mmap，而是根据自己的需求设计合适的“disk-memory”数据交换策略。</p>
 <p>在并发请求情况下，系统调用可以满足对于read请求的要求，但对于write请求而言，由于OS并不理解DB层面上的高级语义，从OS的视角来看，其仅仅只执行相应的读写指令，而并不知道这些指令对应的数据是什么样的，以及我们是怎样请求这些数据的。对于write请求，系统调用并不知道哪些page应该在另一些配置之前被刷到内存中。</p>
@@ -274,7 +274,7 @@
 <p>Heap File有链表实现（不采用）/页目录实现两种实现方式</p>
 <p>页目录实现：</p>
 <p>Directory中包含Page的空闲信息，指针等内容</p>
-<img src="15445-1/image-20220415190220698.png" alt="image-20220415190220698" style="zoom:50%;" />
+<img src="image-20220415190220698.png" alt="image-20220415190220698" style="zoom:50%;" />
 
 <h2 id="Page-Layout"><a href="#Page-Layout" class="headerlink" title="Page Layout"></a>Page Layout</h2><p>每个Page有Header和Data部分组成</p>
 <p>Header中保存信息：</p>
@@ -285,7 +285,7 @@
 <li>transaction visibility</li>
 <li>compression information(gzip/etc..)</li>
 </ul>
-<img src="15445-1/image-20220415190417339.png" alt="image-20220415190417339" style="zoom: 33%;" />
+<img src="image-20220415190417339.png" alt="image-20220415190417339" style="zoom: 33%;" />
 
 <p>对于Page中保存数据即Tuples，一般可以有两种思路：</p>
 <ul>
@@ -295,7 +295,7 @@
 </ul>
 </li>
 </ul>
-<img src="15445-1/image-20220415190926656.png" alt="image-20220415190926656" style="zoom: 50%;" />
+<img src="image-20220415190926656.png" alt="image-20220415190926656" style="zoom: 50%;" />
 
 
 
@@ -306,7 +306,7 @@
 <li>bitmap for null values</li>
 </ul>
 <p>对于一个tuple，其id可以用pageid+slotsid进行表示，不同的DB有不同的实现方式</p>
-<img src="15445-1/image-20220415191737687.png" alt="image-20220415191737687" style="zoom:33%;" />
+<img src="image-20220415191737687.png" alt="image-20220415191737687" style="zoom:33%;" />
 
 <blockquote>
 <p>denormalize tuple data：</p>
