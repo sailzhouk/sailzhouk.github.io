@@ -20,30 +20,23 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
 
 <script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
-<meta name="description" content="muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析 日志要记录的内容： 收到每条内部消息的id  收到每条外部消息的全文  发出的每条消息的全文，全局唯一的id  关键内部状态的变更   日志为多生产者-单消费者问题 生产者  低延迟 无阻塞 低cpu开销   消费者  吞吐量    功能 主要提供日志分级功能  TRACE、DEBUG、INFO、WARN、ERROR、FATA">
-<meta property="og:type" content="article">
-<meta property="og:title" content="muduo-学习日志库">
-<meta property="og:url" content="http://example.com/2021/05/03/muduo-log/index.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Philip&#39;s Brain">
+<meta property="og:url" content="http://example.com/page/2/index.html">
 <meta property="og:site_name" content="Philip&#39;s Brain">
-<meta property="og:description" content="muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析 日志要记录的内容： 收到每条内部消息的id  收到每条外部消息的全文  发出的每条消息的全文，全局唯一的id  关键内部状态的变更   日志为多生产者-单消费者问题 生产者  低延迟 无阻塞 低cpu开销   消费者  吞吐量    功能 主要提供日志分级功能  TRACE、DEBUG、INFO、WARN、ERROR、FATA">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/2021/05/03/muduo-log/20210503.png">
-<meta property="article:published_time" content="2021-05-03T07:31:52.000Z">
-<meta property="article:modified_time" content="2021-05-14T14:08:35.637Z">
 <meta property="article:author" content="Sail Yu">
-<meta property="article:tag" content="muduo">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2021/05/03/muduo-log/20210503.png">
 
 
-<link rel="canonical" href="http://example.com/2021/05/03/muduo-log/">
+<link rel="canonical" href="http://example.com/page/2/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;03&#x2F;muduo-log&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;03&#x2F;muduo-log&#x2F;&quot;,&quot;title&quot;:&quot;muduo-学习日志库&quot;}</script>
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:true,&quot;isPost&quot;:false,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:&quot;&quot;,&quot;permalink&quot;:&quot;&quot;,&quot;path&quot;:&quot;page&#x2F;2&#x2F;index.html&quot;,&quot;title&quot;:&quot;&quot;}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
-<title>muduo-学习日志库 | Philip's Brain</title><script src="/js/config.js"></script>
+<title>Philip's Brain</title><script src="/js/config.js"></script>
   
 
 
@@ -97,7 +90,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+    <div class="sidebar-inner sidebar-overview-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -110,7 +103,6 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E8%A6%81%E8%AE%B0%E5%BD%95%E7%9A%84%E5%86%85%E5%AE%B9%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">日志要记录的内容：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E4%B8%BA%E5%A4%9A%E7%94%9F%E4%BA%A7%E8%80%85-%E5%8D%95%E6%B6%88%E8%B4%B9%E8%80%85%E9%97%AE%E9%A2%98"><span class="nav-number">2.</span> <span class="nav-text">日志为多生产者-单消费者问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD"><span class="nav-number">3.</span> <span class="nav-text">功能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E5%AE%9E%E7%8E%B0%E7%90%86%E8%A7%A3%EF%BC%8Cmuduo%E5%BA%93%E4%B8%AD%E6%B6%89%E5%8F%8A%E6%97%A5%E5%BF%97%E6%93%8D%E4%BD%9C%E7%9A%84%E7%B1%BB%E5%85%B3%E7%B3%BB%E5%A6%82%E4%B8%8B"><span class="nav-number">4.</span> <span class="nav-text">从实现理解，muduo库中涉及日志操作的类关系如下:</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A6%82%E6%8B%AC%EF%BC%9A"><span class="nav-number">4.1.</span> <span class="nav-text">概括：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FixedBuffer"><span class="nav-number">4.2.</span> <span class="nav-text">FixedBuffer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LogStream"><span class="nav-number">4.3.</span> <span class="nav-text">LogStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Logger"><span class="nav-number">4.4.</span> <span class="nav-text">Logger</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AppendFile"><span class="nav-number">5.</span> <span class="nav-text">AppendFile</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#LogFile"><span class="nav-number">5.1.</span> <span class="nav-text">LogFile</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -161,17 +153,16 @@
 </noscript>
 
 
-    <div class="main-inner post posts-expand">
+    <div class="main-inner index posts-expand">
 
-
-  
+    
 
 
 <div class="post-block">
   
   
 
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/03/muduo-log/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -184,9 +175,9 @@
       <meta itemprop="name" content="Philip's Brain">
     </span>
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          muduo-学习日志库
-        </h1>
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2021/05/03/muduo-log/" class="post-title-link" itemprop="url">muduo-学习日志库</a>
+        </h2>
 
         <div class="post-meta-container">
           <div class="post-meta">
@@ -216,7 +207,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <p>muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析</p>
+          <p>muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析</p>
 <h3 id="日志要记录的内容："><a href="#日志要记录的内容：" class="headerlink" title="日志要记录的内容："></a>日志要记录的内容：</h3><ul>
 <li><p>收到每条内部消息的id</p>
 </li>
@@ -294,6 +285,7 @@
 <p>LogFile类中的文件由AppendFile类来进行管理，Logger类关联了一个AppendFile的指针（以unique_ptr的形式）。</p>
 <p>LogFile同时实现了对文件进行滚动的操作，分别以文件大小，写入时间和写入次数作为三个独立的滚动判断条件，任何一个条件的触发都会使日志进行滚动</p>
 
+      
     </div>
 
     
@@ -301,21 +293,8 @@
     
 
     <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/muduo/" rel="tag"># muduo</a>
-          </div>
-
-        
-
-          <div class="post-nav">
-            <div class="post-nav-item">
-            </div>
-            <div class="post-nav-item">
-                <a href="/2021/05/14/muduo-buffer1/" rel="next" title="muduo-学习Buffer Class">
-                  muduo-学习Buffer Class <i class="fa fa-chevron-right"></i>
-                </a>
-            </div>
-          </div>
+        <div class="post-eof"></div>
+      
     </footer>
   </article>
 </div>
@@ -323,7 +302,9 @@
 
 
 
-
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+  </nav>
 <script src="/js/comments.js"></script>
 </div>
   </main>

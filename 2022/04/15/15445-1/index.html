@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="Disk-Oriented Architecture计算机的物理存储可以按Volatile和Non-Volatile进行区分 Volatile:   断电后数据丢失–&gt;不能保存持久化的数据 随机存取 字节寻址  Non-Volatile:  断电后数据不会丢失 顺序存取–&gt;按照顺序进行存储 按照Block进行寻址  我们常用Memory（Volatile）和Disk（Non-volat">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Database Storage">
+<meta property="og:url" content="http://example.com/2022/04/15/15445-1/index.html">
+<meta property="og:site_name" content="Philip&#39;s Brain">
+<meta property="og:description" content="Disk-Oriented Architecture计算机的物理存储可以按Volatile和Non-Volatile进行区分 Volatile:   断电后数据丢失–&gt;不能保存持久化的数据 随机存取 字节寻址  Non-Volatile:  断电后数据不会丢失 顺序存取–&gt;按照顺序进行存储 按照Block进行寻址  我们常用Memory（Volatile）和Disk（Non-volat">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415182005409.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415190220698.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415190417339.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415190926656.png">
+<meta property="og:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415191737687.png">
+<meta property="article:published_time" content="2022-04-15T07:02:57.000Z">
+<meta property="article:modified_time" content="2022-04-15T11:20:05.089Z">
+<meta property="article:author" content="Sail Yu">
+<meta property="article:tag" content="15445">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/04/15/15445-1/15445-1/image-20220415182005409.png">
+
+
+<link rel="canonical" href="http://example.com/2022/04/15/15445-1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2022&#x2F;04&#x2F;15&#x2F;15445-1&#x2F;&quot;,&quot;path&quot;:&quot;2022&#x2F;04&#x2F;15&#x2F;15445-1&#x2F;&quot;,&quot;title&quot;:&quot;Database Storage&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Database Storage | Philip's Brain</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Philip's Brain</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Disk-Oriented-Architecture"><span class="nav-number">1.</span> <span class="nav-text">Disk-Oriented Architecture</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Why-not-os%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">Why not os？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%9C%A8Disk%E4%B8%AD%E7%9A%84%E5%AD%98%E5%82%A8%E5%BD%A2%E5%BC%8F"><span class="nav-number">3.</span> <span class="nav-text">数据在Disk中的存储形式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#File-Storage"><span class="nav-number">3.1.</span> <span class="nav-text">File Storage</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Page-Layout"><span class="nav-number">3.2.</span> <span class="nav-text">Page Layout</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tuple-Layout"><span class="nav-number">3.3.</span> <span class="nav-text">Tuple Layout</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Sail Yu</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/15/15445-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Sail Yu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Philip's Brain">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Database Storage
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2022-04-15 15:02:57 / Modified: 19:20:05" itemprop="dateCreated datePublished" datetime="2022-04-15T15:02:57+08:00">2022-04-15</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="Disk-Oriented-Architecture"><a href="#Disk-Oriented-Architecture" class="headerlink" title="Disk-Oriented Architecture"></a>Disk-Oriented Architecture</h1><p>计算机的物理存储可以按Volatile和Non-Volatile进行区分</p>
+<p>Volatile: </p>
+<ul>
+<li>断电后数据丢失–&gt;不能保存持久化的数据</li>
+<li>随机存取</li>
+<li>字节寻址</li>
+</ul>
+<p>Non-Volatile:</p>
+<ul>
+<li>断电后数据不会丢失</li>
+<li>顺序存取–&gt;按照顺序进行存储</li>
+<li>按照Block进行寻址</li>
+</ul>
+<p>我们常用Memory（Volatile）和Disk（Non-volatile）来区分计算机的物理存储</p>
+<blockquote>
+<p>课程中提到有Non-volatile Memory的存在，基于这种类型的存储或可构建出全新的DBMS</p>
+</blockquote>
+<p>DB中的大量数据需要存储在Disk中，数据在Memory和Disk之间的移动会耗费大量的资源，DB需要精心设计存储结构保证读写操作的高效。</p>
+<img src="15445-1/image-20220415182005409.png" alt="image-20220415182005409" style="zoom: 33%;" />
+
+<h1 id="Why-not-os？"><a href="#Why-not-os？" class="headerlink" title="Why not os？"></a>Why not os？</h1><p>数据以文件的形式存储在磁盘中，一个文件中的每个页在被读取时需要被加载到内存中，即从虚拟内存加载到物理内存中。DB在设计时往往不使用OS自带的内存管理调用，如mmap，而是根据自己的需求设计合适的“disk-memory”数据交换策略。</p>
+<p>在并发请求情况下，系统调用可以满足对于read请求的要求，但对于write请求而言，由于OS并不理解DB层面上的高级语义，从OS的视角来看，其仅仅只执行相应的读写指令，而并不知道这些指令对应的数据是什么样的，以及我们是怎样请求这些数据的。对于write请求，系统调用并不知道哪些page应该在另一些配置之前被刷到内存中。</p>
+<p>DB可以做到更好的：</p>
+<ul>
+<li>Flushing dirty pages to disk in the correct order. </li>
+<li>Specialized prefetching.</li>
+<li>Buffer replacement policy. </li>
+<li>Thread/process scheduling.</li>
+</ul>
+<h1 id="数据在Disk中的存储形式"><a href="#数据在Disk中的存储形式" class="headerlink" title="数据在Disk中的存储形式"></a>数据在Disk中的存储形式</h1><blockquote>
+<p>Problem #1: How the DBMS represents the database in files on disk.</p>
+</blockquote>
+<h2 id="File-Storage"><a href="#File-Storage" class="headerlink" title="File Storage"></a>File Storage</h2><p>DB通过Storage Manager去管理其存储的File，一个File由多个Page组成，Storage Manager需要：</p>
+<ul>
+<li>追踪对每一页上数据的读写</li>
+<li>寻找空余的存储空间</li>
+</ul>
+<p>每一个Page由唯一的标识符进行标记，表示固定大小的连续数据，Page存储的内容分为：tuples、logs、meta-data、indexes…一般一个page不会混合存储多种类型的数据（为了最大程度地从crash中恢复）</p>
+<p>对于DB来说，Page有三种：</p>
+<ul>
+<li>Hardware Page(4KB)</li>
+<li>OS Page(4KB)</li>
+<li>DB Page(512B-16KB)</li>
+</ul>
+<blockquote>
+<p>不同厂家对DB大小的设计不同，这是一种取舍，过小的Page容易导致目录页过大，从而使得cache没办法存储下目录页（类似CPU的TLB），而大的Page又会需要很多的额外操作来保证对一个Page的写入是原子的，计算机只能保证对一个Hardware Page(4KB)的写入是原子的，因此大于其大小的Page需要额外增加逻辑保证写入的原子性，也会在某种程度上降低性能。</p>
+</blockquote>
+<p>DB中的文件用Heap File的形式进行存储</p>
+<blockquote>
+<p>A heap file is an unordered collection of pages where tuples that are stored in random order. </p>
+<ul>
+<li><p>Create / Get / Write / Delete Page </p>
+</li>
+<li><p>Must also support iterating over all pages.</p>
+</li>
+</ul>
+</blockquote>
+<p>Heap File有链表实现（不采用）/页目录实现两种实现方式</p>
+<p>页目录实现：</p>
+<p>Directory中包含Page的空闲信息，指针等内容</p>
+<img src="15445-1/image-20220415190220698.png" alt="image-20220415190220698" style="zoom:50%;" />
+
+<h2 id="Page-Layout"><a href="#Page-Layout" class="headerlink" title="Page Layout"></a>Page Layout</h2><p>每个Page有Header和Data部分组成</p>
+<p>Header中保存信息：</p>
+<ul>
+<li>checksum</li>
+<li>page size</li>
+<li>DBMS version</li>
+<li>transaction visibility</li>
+<li>compression information(gzip/etc..)</li>
+</ul>
+<img src="15445-1/image-20220415190417339.png" alt="image-20220415190417339" style="zoom: 33%;" />
+
+<p>对于Page中保存数据即Tuples，一般可以有两种思路：</p>
+<ul>
+<li>维护一个num tuples，每次将新的tuple添加到最后（不适用删除场景，并且tuple的长度也是固定的）</li>
+<li>从前向后维护slots，从后向前存储数据，slots中存储tuple的首地址（tuple长度可变）<ul>
+<li>在这种情况下header只需保存已用的slots信息以及最后一个已用的slot的首地址</li>
+</ul>
+</li>
+</ul>
+<img src="15445-1/image-20220415190926656.png" alt="image-20220415190926656" style="zoom: 50%;" />
+
+
+
+<h2 id="Tuple-Layout"><a href="#Tuple-Layout" class="headerlink" title="Tuple Layout"></a>Tuple Layout</h2><p>tuple由一串连续的bytes组成，根据schema中属性的长度，解析出tuple中每个属性的值，schema中的meta-data也无需存储在tuple中</p>
+<p>tuple=header+data，其header部分主要存储：</p>
+<ul>
+<li>visibility info (for concurrency control)</li>
+<li>bitmap for null values</li>
+</ul>
+<p>对于一个tuple，其id可以用pageid+slotsid进行表示，不同的DB有不同的实现方式</p>
+<img src="15445-1/image-20220415191737687.png" alt="image-20220415191737687" style="zoom:33%;" />
+
+<blockquote>
+<p>denormalize tuple data：</p>
+<p>一般不同table的tuples都存储在不同的page上，而当遇到比如join操作时，数据库会将不同table的tuple在物理存储上连接到一起，以优化后续操作的性能</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/15445/" rel="tag"># 15445</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/15/mianjingzijie/" rel="prev" title="字节面经">
+                  <i class="fa fa-chevron-left"></i> 字节面经
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sail Yu</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

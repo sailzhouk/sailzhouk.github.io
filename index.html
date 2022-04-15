@@ -115,7 +115,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
           <a href="/archives">
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -125,7 +125,7 @@
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">tags</span>
       </div>
   </nav>
@@ -154,6 +154,168 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/15/15445-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Sail Yu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Philip's Brain">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/04/15/15445-1/" class="post-title-link" itemprop="url">Database Storage</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2022-04-15 15:02:57 / Modified: 19:20:05" itemprop="dateCreated datePublished" datetime="2022-04-15T15:02:57+08:00">2022-04-15</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="Disk-Oriented-Architecture"><a href="#Disk-Oriented-Architecture" class="headerlink" title="Disk-Oriented Architecture"></a>Disk-Oriented Architecture</h1><p>计算机的物理存储可以按Volatile和Non-Volatile进行区分</p>
+<p>Volatile: </p>
+<ul>
+<li>断电后数据丢失–&gt;不能保存持久化的数据</li>
+<li>随机存取</li>
+<li>字节寻址</li>
+</ul>
+<p>Non-Volatile:</p>
+<ul>
+<li>断电后数据不会丢失</li>
+<li>顺序存取–&gt;按照顺序进行存储</li>
+<li>按照Block进行寻址</li>
+</ul>
+<p>我们常用Memory（Volatile）和Disk（Non-volatile）来区分计算机的物理存储</p>
+<blockquote>
+<p>课程中提到有Non-volatile Memory的存在，基于这种类型的存储或可构建出全新的DBMS</p>
+</blockquote>
+<p>DB中的大量数据需要存储在Disk中，数据在Memory和Disk之间的移动会耗费大量的资源，DB需要精心设计存储结构保证读写操作的高效。</p>
+<img src="15445-1/image-20220415182005409.png" alt="image-20220415182005409" style="zoom: 33%;" />
+
+<h1 id="Why-not-os？"><a href="#Why-not-os？" class="headerlink" title="Why not os？"></a>Why not os？</h1><p>数据以文件的形式存储在磁盘中，一个文件中的每个页在被读取时需要被加载到内存中，即从虚拟内存加载到物理内存中。DB在设计时往往不使用OS自带的内存管理调用，如mmap，而是根据自己的需求设计合适的“disk-memory”数据交换策略。</p>
+<p>在并发请求情况下，系统调用可以满足对于read请求的要求，但对于write请求而言，由于OS并不理解DB层面上的高级语义，从OS的视角来看，其仅仅只执行相应的读写指令，而并不知道这些指令对应的数据是什么样的，以及我们是怎样请求这些数据的。对于write请求，系统调用并不知道哪些page应该在另一些配置之前被刷到内存中。</p>
+<p>DB可以做到更好的：</p>
+<ul>
+<li>Flushing dirty pages to disk in the correct order. </li>
+<li>Specialized prefetching.</li>
+<li>Buffer replacement policy. </li>
+<li>Thread/process scheduling.</li>
+</ul>
+<h1 id="数据在Disk中的存储形式"><a href="#数据在Disk中的存储形式" class="headerlink" title="数据在Disk中的存储形式"></a>数据在Disk中的存储形式</h1><blockquote>
+<p>Problem #1: How the DBMS represents the database in files on disk.</p>
+</blockquote>
+<h2 id="File-Storage"><a href="#File-Storage" class="headerlink" title="File Storage"></a>File Storage</h2><p>DB通过Storage Manager去管理其存储的File，一个File由多个Page组成，Storage Manager需要：</p>
+<ul>
+<li>追踪对每一页上数据的读写</li>
+<li>寻找空余的存储空间</li>
+</ul>
+<p>每一个Page由唯一的标识符进行标记，表示固定大小的连续数据，Page存储的内容分为：tuples、logs、meta-data、indexes…一般一个page不会混合存储多种类型的数据（为了最大程度地从crash中恢复）</p>
+<p>对于DB来说，Page有三种：</p>
+<ul>
+<li>Hardware Page(4KB)</li>
+<li>OS Page(4KB)</li>
+<li>DB Page(512B-16KB)</li>
+</ul>
+<blockquote>
+<p>不同厂家对DB大小的设计不同，这是一种取舍，过小的Page容易导致目录页过大，从而使得cache没办法存储下目录页（类似CPU的TLB），而大的Page又会需要很多的额外操作来保证对一个Page的写入是原子的，计算机只能保证对一个Hardware Page(4KB)的写入是原子的，因此大于其大小的Page需要额外增加逻辑保证写入的原子性，也会在某种程度上降低性能。</p>
+</blockquote>
+<p>DB中的文件用Heap File的形式进行存储</p>
+<blockquote>
+<p>A heap file is an unordered collection of pages where tuples that are stored in random order. </p>
+<ul>
+<li><p>Create / Get / Write / Delete Page </p>
+</li>
+<li><p>Must also support iterating over all pages.</p>
+</li>
+</ul>
+</blockquote>
+<p>Heap File有链表实现（不采用）/页目录实现两种实现方式</p>
+<p>页目录实现：</p>
+<p>Directory中包含Page的空闲信息，指针等内容</p>
+<img src="15445-1/image-20220415190220698.png" alt="image-20220415190220698" style="zoom:50%;" />
+
+<h2 id="Page-Layout"><a href="#Page-Layout" class="headerlink" title="Page Layout"></a>Page Layout</h2><p>每个Page有Header和Data部分组成</p>
+<p>Header中保存信息：</p>
+<ul>
+<li>checksum</li>
+<li>page size</li>
+<li>DBMS version</li>
+<li>transaction visibility</li>
+<li>compression information(gzip/etc..)</li>
+</ul>
+<img src="15445-1/image-20220415190417339.png" alt="image-20220415190417339" style="zoom: 33%;" />
+
+<p>对于Page中保存数据即Tuples，一般可以有两种思路：</p>
+<ul>
+<li>维护一个num tuples，每次将新的tuple添加到最后（不适用删除场景，并且tuple的长度也是固定的）</li>
+<li>从前向后维护slots，从后向前存储数据，slots中存储tuple的首地址（tuple长度可变）<ul>
+<li>在这种情况下header只需保存已用的slots信息以及最后一个已用的slot的首地址</li>
+</ul>
+</li>
+</ul>
+<img src="15445-1/image-20220415190926656.png" alt="image-20220415190926656" style="zoom: 50%;" />
+
+
+
+<h2 id="Tuple-Layout"><a href="#Tuple-Layout" class="headerlink" title="Tuple Layout"></a>Tuple Layout</h2><p>tuple由一串连续的bytes组成，根据schema中属性的长度，解析出tuple中每个属性的值，schema中的meta-data也无需存储在tuple中</p>
+<p>tuple=header+data，其header部分主要存储：</p>
+<ul>
+<li>visibility info (for concurrency control)</li>
+<li>bitmap for null values</li>
+</ul>
+<p>对于一个tuple，其id可以用pageid+slotsid进行表示，不同的DB有不同的实现方式</p>
+<img src="15445-1/image-20220415191737687.png" alt="image-20220415191737687" style="zoom:33%;" />
+
+<blockquote>
+<p>denormalize tuple data：</p>
+<p>一般不同table的tuples都存储在不同的page上，而当遇到比如join操作时，数据库会将不同table的tuple在物理存储上连接到一起，以优化后续操作的性能</p>
+</blockquote>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1080,153 +1242,9 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/03/muduo-log/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Sail Yu">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Philip's Brain">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2021/05/03/muduo-log/" class="post-title-link" itemprop="url">muduo-学习日志库</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2021-05-03 15:31:52" itemprop="dateCreated datePublished" datetime="2021-05-03T15:31:52+08:00">2021-05-03</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">Edited on</span>
-        <time title="Modified: 2021-05-14 22:08:35" itemprop="dateModified" datetime="2021-05-14T22:08:35+08:00">2021-05-14</time>
-      </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>muduo的日志库为诊断日志，主要用于故障诊断和追踪，也可用于性能分析</p>
-<h3 id="日志要记录的内容："><a href="#日志要记录的内容：" class="headerlink" title="日志要记录的内容："></a>日志要记录的内容：</h3><ul>
-<li><p>收到每条内部消息的id</p>
-</li>
-<li><p>收到每条外部消息的全文</p>
-</li>
-<li><p>发出的每条消息的全文，全局唯一的id</p>
-</li>
-<li><p>关键内部状态的变更</p>
-</li>
-</ul>
-<h3 id="日志为多生产者-单消费者问题"><a href="#日志为多生产者-单消费者问题" class="headerlink" title="日志为多生产者-单消费者问题"></a>日志为多生产者-单消费者问题</h3><ul>
-<li><p>生产者</p>
-<ul>
-<li>低延迟</li>
-<li>无阻塞</li>
-<li>低cpu开销</li>
-</ul>
-</li>
-<li><p>消费者</p>
-<ul>
-<li>吞吐量</li>
-</ul>
-</li>
-</ul>
-<h3 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h3><ul>
-<li><p>主要提供日志分级功能</p>
-<ul>
-<li>TRACE、DEBUG、INFO、WARN、ERROR、FATAL</li>
-</ul>
-</li>
-<li><p>向本地文件中写入日志</p>
-<ul>
-<li>日志文件滚动<ul>
-<li>文件大小：大于设定大小就自动切换下一个文件</li>
-<li>时间：每天零点新建一个日志文件</li>
-</ul>
-</li>
-<li>日志文件命名<ul>
-<li>sail_logfile_test.20210428-073558.DESKTOP-OPTF11D.17419.log</li>
-<li>进程名.年月日-时分秒.主机名.进程id.log</li>
-<li>时间采用GMT时区</li>
-</ul>
-</li>
-<li>日志消息格式<ul>
-<li>20210428 12:19:41.622804Z 32059 INFO  123 - LogFile_test.cc:31</li>
-<li>日期 时间 微秒 线程 级别  正文 - 源文件名 行号</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="从实现理解，muduo库中涉及日志操作的类关系如下"><a href="#从实现理解，muduo库中涉及日志操作的类关系如下" class="headerlink" title="从实现理解，muduo库中涉及日志操作的类关系如下:"></a>从实现理解，muduo库中涉及日志操作的类关系如下:</h3><p><img src="/2021/05/03/muduo-log/20210503.png"></p>
-<p>上面的类图仅是简略地展现了各个类之间的关系以及它们的成员</p>
-<h4 id="概括："><a href="#概括：" class="headerlink" title="概括："></a>概括：</h4><p><code>Logger</code>为日志类的主体，主要向外界提供接口，其写入日志的功能由其包含的<code>Impl</code>的对象实现，<code>Impl</code>内部包含<code>SourceFile</code>，其本质上是一个buffer，存储文件名信息，<code>Timestamp</code>用于打印日期时间，<code>LogStream</code>为输出流，<code>Impl</code>会向该流中不断输入日志信息。</p>
-<p>Impl在构造函数中首先打印出<code>时间和级别</code>，随后用户程序不断向Impl中的LogStream对象输入<code>日志正文</code>内容，在日志类析构时，Impl将最后的<code>文件名和行号</code>等信息打印到LogStream中，最后<code>LogStream</code>中缓存的内容由设置的输出方法输出到标准输出或者某个文件中。</p>
-<p><code>LogFile</code>为日志的文件类，实现了日志的文件滚动功能，其关联了<code>AppendFile</code>（用于写入的文件）和一个互斥锁（保证线程安全），通过编写相应的输出方法然后将其通过Logger的<code>setOutput</code>方法注册到Logger中，就可以实现将日志打印到文件中，同时也完成了日志文件的滚动。</p>
-<p>下面是一些对其中涉及到的类内部细节的理解</p>
-<h4 id="FixedBuffer"><a href="#FixedBuffer" class="headerlink" title="FixedBuffer"></a>FixedBuffer</h4><p>封装了一个data_数组，该类使用了非类型模板参数T，用于设置buffer的固定大小，同时cur_指向写入的起始点，如果需要重新写入，无需清空buffer，只需要移动cur_指针指向buffer_的起始处，这样新写入的数据就会覆盖原有数据。</p>
-<p>buffer通过append方法来添加数据，其内部采用memcpy实现</p>
-<h4 id="LogStream"><a href="#LogStream" class="headerlink" title="LogStream"></a>LogStream</h4><p>私有数据中包含一个<code>FixedBuffer</code>和一个静态常量<code>kMaxNumericSize</code>用于设置FixedBuffer的大小；</p>
-<p>该类重载了一系列<code>operator&lt;&lt;</code>方法用于提供c++<code>stream&lt;&lt;</code>风格的前端接口。</p>
-<p>同时提供了<code>append</code>便于用户对于自定义的输入类型定义自己的<code>operator&lt;&lt;</code>方法</p>
-<h4 id="Logger"><a href="#Logger" class="headerlink" title="Logger"></a>Logger</h4><p>Logger类主要向外界提供一个接口，有三个静态方法供外界设置</p>
-<ul>
-<li><p>setOutput：设置输出方法g_output</p>
-</li>
-<li><p>setFlush：设置g_flush，用于清空缓冲区</p>
-</li>
-<li><p>setTimeZone：设置时区</p>
-</li>
-</ul>
-<p>Logger对象首先创建Impl在Impl的构造过程中，将“日期 时间 微秒 线程 级别”等数据添加到LogStream类型的buffer中，随后LogStream接收用户输入的信息，最后在其析构时，一次性将buffer中所有内容使用g_output进行输出。</p>
-<h3 id="AppendFile"><a href="#AppendFile" class="headerlink" title="AppendFile"></a>AppendFile</h3><p>封装了一个打开的文件，包括文件描述符，以及一个文件buffer</p>
-<h4 id="LogFile"><a href="#LogFile" class="headerlink" title="LogFile"></a>LogFile</h4><p>LogFile主要用于实现将日志写入文件的操作，LogFile类提供append方法用于用户自己编写outputFunc从而通过Logger::setOutput将Logger类的输出定向到文件中。Logger类中关联（unique_ptr）了一个互斥锁，因此其将数据写入文件的操作修改成了不加锁的版本，线程之间的同步由Logger类中的锁来实现，尽可能地提高<code>“消费者”</code>的吞吐量。</p>
-<p>LogFile类中的文件由AppendFile类来进行管理，Logger类关联了一个AppendFile的指针（以unique_ptr的形式）。</p>
-<p>LogFile同时实现了对文件进行滚动的操作，分别以文件大小，写入时间和写入次数作为三个独立的滚动判断条件，任何一个条件的触发都会使日志进行滚动</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+  </nav>
 <script src="/js/comments.js"></script>
 </div>
   </main>
@@ -1237,7 +1255,7 @@
 
 <div class="copyright">
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
