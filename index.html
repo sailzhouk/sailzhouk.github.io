@@ -188,7 +188,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2022-04-15 15:02:57 / Modified: 19:40:06" itemprop="dateCreated datePublished" datetime="2022-04-15T15:02:57+08:00">2022-04-15</time>
+      <time title="Created: 2022-04-15 15:02:57 / Modified: 21:35:50" itemprop="dateCreated datePublished" datetime="2022-04-15T15:02:57+08:00">2022-04-15</time>
     </span>
 
   
@@ -219,7 +219,10 @@
 <p>课程中提到有Non-volatile Memory的存在，基于这种类型的存储或可构建出全新的DBMS</p>
 </blockquote>
 <p>DB中的大量数据需要存储在Disk中，数据在Memory和Disk之间的移动会耗费大量的资源，DB需要精心设计存储结构保证读写操作的高效。</p>
-<p><img src="/image-20220415182005409.png?40"></p>
+<img src="image-20220415182005409.png" style="zoom:40%;" />
+
+
+
 <h1 id="Why-not-os？"><a href="#Why-not-os？" class="headerlink" title="Why not os？"></a>Why not os？</h1><p>数据以文件的形式存储在磁盘中，一个文件中的每个页在被读取时需要被加载到内存中，即从虚拟内存加载到物理内存中。DB在设计时往往不使用OS自带的内存管理调用，如mmap，而是根据自己的需求设计合适的“disk-memory”数据交换策略。</p>
 <p>在并发请求情况下，系统调用可以满足对于read请求的要求，但对于write请求而言，由于OS并不理解DB层面上的高级语义，从OS的视角来看，其仅仅只执行相应的读写指令，而并不知道这些指令对应的数据是什么样的，以及我们是怎样请求这些数据的。对于write请求，系统调用并不知道哪些page应该在另一些配置之前被刷到内存中。</p>
 <p>DB可以做到更好的：</p>
@@ -260,7 +263,7 @@
 <p>Heap File有链表实现（不采用）/页目录实现两种实现方式</p>
 <p>页目录实现：</p>
 <p>Directory中包含Page的空闲信息，指针等内容</p>
-<p><img src="/image-20220415193447634.png?40"></p>
+<p><img src="/2022/04/15/15445-1/image-20220415193447634.png"></p>
 <h2 id="Page-Layout"><a href="#Page-Layout" class="headerlink" title="Page Layout"></a>Page Layout</h2><p>每个Page有Header和Data部分组成</p>
 <p>Header中保存信息：</p>
 <ul>
@@ -270,7 +273,7 @@
 <li>transaction visibility</li>
 <li>compression information(gzip/etc..)</li>
 </ul>
-<p><img src="/image-20220415193535460.png?40"></p>
+<p><img src="/2022/04/15/15445-1/image-20220415193535460.png"></p>
 <p>对于Page中保存数据即Tuples，一般可以有两种思路：</p>
 <ul>
 <li>维护一个num tuples，每次将新的tuple添加到最后（不适用删除场景，并且tuple的长度也是固定的）</li>
@@ -279,7 +282,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="/image-20220415193542503.png?40"></p>
+<p><img src="/2022/04/15/15445-1/image-20220415193542503.png"></p>
 <h2 id="Tuple-Layout"><a href="#Tuple-Layout" class="headerlink" title="Tuple Layout"></a>Tuple Layout</h2><p>tuple由一串连续的bytes组成，根据schema中属性的长度，解析出tuple中每个属性的值，schema中的meta-data也无需存储在tuple中</p>
 <p>tuple=header+data，其header部分主要存储：</p>
 <ul>
@@ -287,7 +290,7 @@
 <li>bitmap for null values</li>
 </ul>
 <p>对于一个tuple，其id可以用pageid+slotsid进行表示，不同的DB有不同的实现方式</p>
-<p><img src="/image-20220415193552344.png?40"></p>
+<p><img src="/2022/04/15/15445-1/image-20220415193552344.png"></p>
 <blockquote>
 <p>denormalize tuple data：</p>
 <p>一般不同table的tuples都存储在不同的page上，而当遇到比如join操作时，数据库会将不同table的tuple在物理存储上连接到一起，以优化后续操作的性能</p>
