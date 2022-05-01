@@ -258,7 +258,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/04/25/15445-project-1/" class="post-title-link" itemprop="url">Project</a>
+          <a href="/2022/04/25/15445-project-1/" class="post-title-link" itemprop="url">Project1：Buffer Pool</a>
         </h2>
 
         <div class="post-meta-container">
@@ -276,7 +276,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">Edited on</span>
-        <time title="Modified: 2022-04-26 22:22:20" itemprop="dateModified" datetime="2022-04-26T22:22:20+08:00">2022-04-26</time>
+        <time title="Modified: 2022-05-01 22:22:42" itemprop="dateModified" datetime="2022-05-01T22:22:42+08:00">2022-05-01</time>
       </span>
 
   
@@ -289,28 +289,17 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="任务-实现一个Buffer-Pool"><a href="#任务-实现一个Buffer-Pool" class="headerlink" title="任务-实现一个Buffer Pool"></a>任务-实现一个Buffer Pool</h1><p>内容：</p>
-<ol>
-<li>Clock Replacement Policy</li>
-<li>Buffer Pool Manager</li>
-</ol>
-<p>要求：</p>
-<ol>
-<li>线程安全</li>
-<li>操作透明，能够通过<code>page_id_t</code>查询到对应的page</li>
-</ol>
-<h1 id="TASK-1-CLOCK-REPLACEMENT-POLICY"><a href="#TASK-1-CLOCK-REPLACEMENT-POLICY" class="headerlink" title="TASK #1 - CLOCK REPLACEMENT POLICY"></a>TASK #1 - CLOCK REPLACEMENT POLICY</h1><p>Is this frame currently in the <code>ClockReplacer</code>?</p>
-<p>Has this frame recently been unpinned (ref flag)?</p>
-<p>Clock Replacer是一个容器，用于存放从磁盘加载进来的page</p>
-<p>其有固定的大小：num_pages</p>
-<ul>
-<li>当加载page小于num_pages时，可以自由加载page进来</li>
-<li>若page已满，则需要按照一定策略进行淘汰，淘汰策略为Clock</li>
-</ul>
-<h2 id="clock淘汰策略"><a href="#clock淘汰策略" class="headerlink" title="clock淘汰策略"></a>clock淘汰策略</h2><h3 id="Victim"><a href="#Victim" class="headerlink" title="Victim"></a>Victim</h3><p>被选中victim的frame也会被移出replacer</p>
-<h3 id="Pin"><a href="#Pin" class="headerlink" title="Pin"></a>Pin</h3><p>frame在pin的时候被移出replacer</p>
-<h3 id="Unpin"><a href="#Unpin" class="headerlink" title="Unpin"></a>Unpin</h3><p>frame在unpin的时候加入到replacer中，</p>
-
+          <blockquote>
+<p>记录并顺便整理一下15-445的Project #1的实现思路，以及遇到的一些坑。</p>
+</blockquote>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/04/25/15445-project-1/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 

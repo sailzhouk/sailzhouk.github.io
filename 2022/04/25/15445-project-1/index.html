@@ -20,28 +20,31 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
 
 <script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.3.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
-<meta name="description" content="任务-实现一个Buffer Pool内容：  Clock Replacement Policy Buffer Pool Manager  要求：  线程安全 操作透明，能够通过page_id_t查询到对应的page  TASK #1 - CLOCK REPLACEMENT POLICYIs this frame currently in the ClockReplacer? Has this fr">
+<meta name="description" content="记录并顺便整理一下15-445的Project #1的实现思路，以及遇到的一些坑。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Project">
+<meta property="og:title" content="Project1：Buffer Pool">
 <meta property="og:url" content="http://example.com/2022/04/25/15445-project-1/index.html">
 <meta property="og:site_name" content="Philip&#39;s Brain">
-<meta property="og:description" content="任务-实现一个Buffer Pool内容：  Clock Replacement Policy Buffer Pool Manager  要求：  线程安全 操作透明，能够通过page_id_t查询到对应的page  TASK #1 - CLOCK REPLACEMENT POLICYIs this frame currently in the ClockReplacer? Has this fr">
+<meta property="og:description" content="记录并顺便整理一下15-445的Project #1的实现思路，以及遇到的一些坑。">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2022/04/25/15445-project-1/image-20220501171849109.png">
+<meta property="og:image" content="http://example.com/2022/04/25/15445-project-1/VOH78FybK96IcSq-20220501222146146.png">
 <meta property="article:published_time" content="2022-04-25T13:33:21.000Z">
-<meta property="article:modified_time" content="2022-04-26T14:22:20.600Z">
+<meta property="article:modified_time" content="2022-05-01T14:22:42.362Z">
 <meta property="article:author" content="Sail Yu">
 <meta property="article:tag" content="15445">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/04/25/15445-project-1/image-20220501171849109.png">
 
 
 <link rel="canonical" href="http://example.com/2022/04/25/15445-project-1/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2022&#x2F;04&#x2F;25&#x2F;15445-project-1&#x2F;&quot;,&quot;path&quot;:&quot;2022&#x2F;04&#x2F;25&#x2F;15445-project-1&#x2F;&quot;,&quot;title&quot;:&quot;Project&quot;}</script>
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;en&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2022&#x2F;04&#x2F;25&#x2F;15445-project-1&#x2F;&quot;,&quot;path&quot;:&quot;2022&#x2F;04&#x2F;25&#x2F;15445-project-1&#x2F;&quot;,&quot;title&quot;:&quot;Project1：Buffer Pool&quot;}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
-<title>Project | Philip's Brain</title><script src="/js/config.js"></script>
+<title>Project1：Buffer Pool | Philip's Brain</title><script src="/js/config.js"></script>
   
 
 
@@ -117,7 +120,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1-%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AABuffer-Pool"><span class="nav-number">1.</span> <span class="nav-text">任务-实现一个Buffer Pool</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TASK-1-CLOCK-REPLACEMENT-POLICY"><span class="nav-number">2.</span> <span class="nav-text">TASK #1 - CLOCK REPLACEMENT POLICY</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#clock%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5"><span class="nav-number">2.1.</span> <span class="nav-text">clock淘汰策略</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Victim"><span class="nav-number">2.1.1.</span> <span class="nav-text">Victim</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Pin"><span class="nav-number">2.1.2.</span> <span class="nav-text">Pin</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unpin"><span class="nav-number">2.1.3.</span> <span class="nav-text">Unpin</span></a></li></ol></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1-%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AABuffer-Pool"><span class="nav-number">1.</span> <span class="nav-text">任务-实现一个Buffer Pool</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1%E5%86%85%E5%AE%B9%EF%BC%9A"><span class="nav-number">1.1.</span> <span class="nav-text">任务内容：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E6%A6%82%E5%BF%B5%E7%90%86%E8%A7%A3%EF%BC%9A"><span class="nav-number">1.2.</span> <span class="nav-text">具体概念理解：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Page"><span class="nav-number">1.2.1.</span> <span class="nav-text">Page</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Buffer-Pool"><span class="nav-number">1.3.</span> <span class="nav-text">Buffer Pool</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TASK-1-LRU-Replacer"><span class="nav-number">2.</span> <span class="nav-text">TASK #1 - LRU Replacer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LRU-Replacer%E5%85%B7%E4%BD%93%E6%80%9D%E8%B7%AF"><span class="nav-number">2.0.1.</span> <span class="nav-text">LRU Replacer具体思路</span></a></li></ol></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -193,7 +196,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Project
+          Project1：Buffer Pool
         </h1>
 
         <div class="post-meta-container">
@@ -211,7 +214,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">Edited on</span>
-        <time title="Modified: 2022-04-26 22:22:20" itemprop="dateModified" datetime="2022-04-26T22:22:20+08:00">2022-04-26</time>
+        <time title="Modified: 2022-05-01 22:22:42" itemprop="dateModified" datetime="2022-05-01T22:22:42+08:00">2022-05-01</time>
       </span>
 
   
@@ -231,27 +234,53 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h1 id="任务-实现一个Buffer-Pool"><a href="#任务-实现一个Buffer-Pool" class="headerlink" title="任务-实现一个Buffer Pool"></a>任务-实现一个Buffer Pool</h1><p>内容：</p>
-<ol>
-<li>Clock Replacement Policy</li>
-<li>Buffer Pool Manager</li>
+        <blockquote>
+<p>记录并顺便整理一下15-445的Project #1的实现思路，以及遇到的一些坑。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="任务-实现一个Buffer-Pool"><a href="#任务-实现一个Buffer-Pool" class="headerlink" title="任务-实现一个Buffer Pool"></a>任务-实现一个Buffer Pool</h1><h2 id="任务内容："><a href="#任务内容：" class="headerlink" title="任务内容："></a>任务内容：</h2><ol>
+<li>LRU Replacement Policy</li>
+<li>Buffer Pool Manager Instance</li>
+<li>Parrallel Buffer Pool Manager</li>
 </ol>
-<p>要求：</p>
-<ol>
-<li>线程安全</li>
-<li>操作透明，能够通过<code>page_id_t</code>查询到对应的page</li>
-</ol>
-<h1 id="TASK-1-CLOCK-REPLACEMENT-POLICY"><a href="#TASK-1-CLOCK-REPLACEMENT-POLICY" class="headerlink" title="TASK #1 - CLOCK REPLACEMENT POLICY"></a>TASK #1 - CLOCK REPLACEMENT POLICY</h1><p>Is this frame currently in the <code>ClockReplacer</code>?</p>
-<p>Has this frame recently been unpinned (ref flag)?</p>
-<p>Clock Replacer是一个容器，用于存放从磁盘加载进来的page</p>
-<p>其有固定的大小：num_pages</p>
+<p>这个project中需要实现三个功能模块，这三个功能模块共同实现了Buffer Pool的基本功能。 </p>
+<h2 id="具体概念理解："><a href="#具体概念理解：" class="headerlink" title="具体概念理解："></a>具体概念理解：</h2><h3 id="Page"><a href="#Page" class="headerlink" title="Page"></a>Page</h3><p><code>Page</code>是Bustub这个项目抽象出来的一个概念，对应磁盘上的page存储结构，Bustub已经实现好了<code>Page</code>，并且通过<code>DiskManager</code>来完成Page的读取，写入等一系列操作。</p>
+<img src="image-20220501171849109.png" alt="image-20220501171849109" style="zoom:50%;" />
+
+<p>上图中简要展示了<code>Page</code>的几个重要属性，其中<code>is_dirty_</code>和<code>pin_count_</code>分别表示内存中该page的数据是否需要发生了更新（即需要刷到磁盘上）和该page的引用数（关系到Buffer Pool的evict机制），因此在实现Buffer Pool时需要时刻关注相应属性的变化。</p>
+<p><code>page_id_</code>为该page在磁盘和内存上的通用标识，<code>data_</code>保存page的数据。</p>
+<h2 id="Buffer-Pool"><a href="#Buffer-Pool" class="headerlink" title="Buffer Pool"></a>Buffer Pool</h2><p>Buffer Pool用于缓存从磁盘加载到内存中的数据，数据以page的形式进行表示，每一个page存储到Buffer Pool的每一个frame中。Buffer Pool中的frame是有限的，因此当载入page过多时，需要先将一部分frame中的page放回磁盘，并加载新的page到对应frame中，这就需要相应的replacement policy的支持。<code>LRU</code>就是一种非常经典的replacement policy。</p>
+<p>总而言之，Buffer Pool是一种支持我们能够读取数据，并负责管理磁盘和内存数据交换的抽象结构，支持通过磁盘上的page_id从Buffer Pool中获取数据，并能够对数据进行缓存，且当载入数据过多时能够通过合理的机制实现数据的淘汰并交换，同时整个Buffer Pool也必须是线程安全的。</p>
+<h1 id="TASK-1-LRU-Replacer"><a href="#TASK-1-LRU-Replacer" class="headerlink" title="TASK #1 - LRU Replacer"></a>TASK #1 - LRU Replacer</h1><p>一开始看到LRU的时候想到的是刷力扣时的LRU题的实现方法，通过双向链表，完全实现一个具有LRU替换策略的容器。但是这个project提供的接口却不是从上述思路去考虑的，容器本身其实是Buffer Pool，而LRU Replacer实际上是一个类似“回收站”一样的对象，Buffer Pool中不再引用的page会先放进这个回收站中，当回收站也放满后，才会通过淘汰机制将page刷回到磁盘。所以整个LRU替换策略实质上是通过Buffer Pool + LRU Replacer共同实现的。</p>
+<p>这里借用<a target="_blank" rel="noopener" href="https://www.qtmuniao.com/2021/02/10/cmu15445-project1-buffer-pool/">网上博客</a>中的图片进行进一步的说明：</p>
+<img src="VOH78FybK96IcSq-20220501222146146.png" alt="frame 状态机" style="zoom:50%;" />
+
+<p>上图为一个Page对应的状态变化的状态机，其有三种状态：</p>
 <ul>
-<li>当加载page小于num_pages时，可以自由加载page进来</li>
-<li>若page已满，则需要按照一定策略进行淘汰，淘汰策略为Clock</li>
+<li>free：说明该page不对应任何磁盘内容的数据，保存在Buffer Pool的<code>free_list_</code>中，开始状态时<code>free_list_</code>中包含全部page。</li>
+<li>pinned：通过<code>NewPage</code>和<code>FetchPage</code>两个方法可以读取到某个<code>page_id_</code>的磁盘page内容，此时该page就属于被引用的状态，page的<code>pin_count_</code>大于0时会一直处于该状态，在这个状态下，该page不应存放在relacer中。</li>
+<li>un-pinned：pinned的page<code>pin_count_</code>为0时调用<code>UnpinPage</code>方法会转换到un-pinned状态，该page同时被放入replacer中（回收站），如果再执行<code>DeletePage</code>方法则该page上的内容会全部清空，重置所有meta-data，并放回<code>free_list_</code>中。</li>
 </ul>
-<h2 id="clock淘汰策略"><a href="#clock淘汰策略" class="headerlink" title="clock淘汰策略"></a>clock淘汰策略</h2><h3 id="Victim"><a href="#Victim" class="headerlink" title="Victim"></a>Victim</h3><p>被选中victim的frame也会被移出replacer</p>
-<h3 id="Pin"><a href="#Pin" class="headerlink" title="Pin"></a>Pin</h3><p>frame在pin的时候被移出replacer</p>
-<h3 id="Unpin"><a href="#Unpin" class="headerlink" title="Unpin"></a>Unpin</h3><p>frame在unpin的时候加入到replacer中，</p>
+<blockquote>
+<p>这里需要注意的是，通过replacer机制及其对应的un-pinned状态实现了对内存中page的复用，当调用<code>FetchPage</code>方法时，由于un-pinned page还没有被真正的“删除”，因此可以通过回收站机制缓存一些page，这种缓冲机制可以提高整体系统的性能。</p>
+</blockquote>
+<h3 id="LRU-Replacer具体思路"><a href="#LRU-Replacer具体思路" class="headerlink" title="LRU Replacer具体思路"></a>LRU Replacer具体思路</h3><p>了解一个page对象的变化是正确设计LRU Replacer和Buffer Pool的核心。</p>
+<p>Project需要我们实现四个接口：</p>
+<ul>
+<li>void Pin(frame_id_t frame_id)</li>
+<li>void Unpin(frame_id_t frame_id)</li>
+<li>bool Victim(frame_id_t *frame_id)</li>
+<li>size_t Size()</li>
+</ul>
+<p>通过之前的分析，<code>Pin</code>和<code>Unpin</code>方法分别为将Buffer Pool中<code>frame_id</code>对应的frame从Replacer中移出，以及放入Replacer中的操作，<code>Victim</code>对应LRU的淘汰策略，淘汰一个<code>frame_id</code>上的page，并通过传出参数传回该<code>frame_id</code>。</p>
+<p>因此Replacer需要一个容器，我们采用的是<code>std::list</code>来实现先进先出的逻辑，实际上<code>std::deque</code>应该也能满足要求，通过一个哈希表来记录Replacer中保存的frame，哈希表结构如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::unordered_map&lt;<span class="keyword">frame_id_t</span>, std::list&lt;<span class="keyword">frame_id_t</span>&gt;::iterator&gt; replacer_frame_map_</span><br></pre></td></tr></table></figure>
+
+<p>其中，key为<code>frame_id</code>，value为list的iterator，这样可以在<code>Pin</code>的时候快速定位到list中待删除的元素位置，使删除的复杂度达到O(1)，<strong>如果不这么做，无法通过HardTest</strong>。</p>
+<p>线程安全的实现通过<code>std::mutex</code>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">const</span> std::lock_guard&lt;std::mutex&gt; <span class="title">lockGuard</span><span class="params">(latch_)</span></span>; <span class="comment">// RAII</span></span><br></pre></td></tr></table></figure>
+
 
     </div>
 
